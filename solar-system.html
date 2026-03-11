@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态太阳系 - SVG & CSS 动画</title>
+    <style>
+        :root {
+            --bg-color: #050510;
+            --orbit-color: rgba(255, 255, 255, 0.15);
+            --sun-color: #ffcc33;
+            --sun-glow: rgba(255, 204, 51, 0.4);
+            
+            /* 行星颜色 */
+            --color-mercury: #A5A5A5;
+            --color-venus: #E3BB76;
+            --color-earth: #2271B3;
+            --color-mars: #E27B58;
+            --color-jupiter: #D39C7E;
+            --color-saturn: #C5AB6E;
+            --color-uranus: #BBE1E4;
+            --color-neptune: #6081FF;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* 星空背景 */
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            z-index: -1;
+        }
+
+        .stars::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, #eee, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 40px 70px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 50px 160px, #ddd, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 130px 80px, #fff, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            opacity: 0.3;
+        }
+
+        svg {
+            width: 90vmin;
+            height: 90vmin;
+            transform: rotateX(20deg); /* 增加一点立体感 */
+        }
+
+        /* 轨道样式 */
+        .orbit {
+            fill: none;
+            stroke: var(--orbit-color);
+            stroke-width: 1;
+        }
+
+        /* 行星通用样式 */
+        .planet {
+            cursor: pointer;
+            transition: r 0.3s ease;
+        }
+
+        .planet:hover {
+            r: 8; /* 悬停放大 */
+        }
+
+        /* 标签文字样式 */
+        .label {
+            fill: white;
+            font-size: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            text-shadow: 0 0 3px black;
+        }
+
+        .planet-group:hover .label {
+            opacity: 1;
+        }
+
+        /* 动画定义 */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .orbit-group {
+            transform-origin: 400px 400px;
+            animation: rotate linear infinite;
+        }
+
+        /* 不同行星的轨道周期 (相对于地球1年进行缩放) */
+        .mercury-group { animation-duration: 5s; }
+        .venus-group   { animation-duration: 8s; }
+        .earth-group   { animation-duration: 12s; }
+        .mars-group    { animation-duration: 18s; }
+        .jupiter-group { animation-duration: 35s; }
+        .saturn-group  { animation-duration: 50s; }
+        .uranus-group  { animation-duration: 75s; }
+        .neptune-group { animation-duration: 100s; }
+
+        .sun {
+            fill: var(--sun-color);
+            filter: drop-shadow(0 0 20px var(--sun-color));
+        }
+
+        /* 标题说明 */
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars"></div>
+
+    <svg viewBox="0 0 800 800">
+        <!-- 太阳 -->
+        <circle cx="400" cy="400" r="30" class="sun" />
+        <!-- 太阳光晕 -->
+        <circle cx="400" cy="400" r="35" fill="var(--sun-glow)" />
+
+        <!-- 水星 -->
+        <circle cx="400" cy="400" r="55" class="orbit" />
+        <g class="orbit-group mercury-group">
+            <g class="planet-group">
+                <circle cx="455" cy="400" r="3" fill="var(--color-mercury)" class="planet" />
+                <text x="462" y="405" class="label">水星 Mercury</text>
+            </g>
+        </g>
+
+        <!-- 金星 -->
+        <circle cx="400" cy="400" r="85" class="orbit" />
+        <g class="orbit-group venus-group">
+            <g class="planet-group">
+                <circle cx="485" cy="400" r="5" fill="var(--color-venus)" class="planet" />
+                <text x="495" y="405" class="label">金星 Venus</text>
+            </g>
+        </g>
+
+        <!-- 地球 -->
+        <circle cx="400" cy="400" r="120" class="orbit" />
+        <g class="orbit-group earth-group">
+            <g class="planet-group">
+                <circle cx="520" cy="400" r="6" fill="var(--color-earth)" class="planet" />
+                <text x="530" y="405" class="label">地球 Earth</text>
+            </g>
+        </g>
+
+        <!-- 火星 -->
+        <circle cx="400" cy="400" r="155" class="orbit" />
+        <g class="orbit-group mars-group">
+            <g class="planet-group">
+                <circle cx="555" cy="400" r="4.5" fill="var(--color-mars)" class="planet" />
+                <text x="565" y="405" class="label">火星 Mars</text>
+            </g>
+        </g>
+
+        <!-- 木星 -->
+        <circle cx="400" cy="400" r="210" class="orbit" />
+        <g class="orbit-group jupiter-group">
+            <g class="planet-group">
+                <circle cx="610" cy="400" r="12" fill="var(--color-jupiter)" class="planet" />
+                <text x="625" y="405" class="label">木星 Jupiter</text>
+            </g>
+        </g>
+
+        <!-- 土星 -->
+        <circle cx="400" cy="400" r="270" class="orbit" />
+        <g class="orbit-group saturn-group">
+            <g class="planet-group">
+                <!-- 土星环 -->
+                <ellipse cx="670" cy="400" rx="18" ry="6" fill="none" stroke="rgba(197, 171, 110, 0.4)" stroke-width="3" transform="rotate(20 670 400)" />
+                <circle cx="670" cy="400" r="10" fill="var(--color-saturn)" class="planet" />
+                <text x="685" y="405" class="label">土星 Saturn</text>
+            </g>
+        </g>
+
+        <!-- 天王星 -->
+        <circle cx="400" cy="400" r="320" class="orbit" />
+        <g class="orbit-group uranus-group">
+            <g class="planet-group">
+                <circle cx="720" cy="400" r="7" fill="var(--color-uranus)" class="planet" />
+                <text x="732" y="405" class="label">天王星 Uranus</text>
+            </g>
+        </g>
+
+        <!-- 海王星 -->
+        <circle cx="400" cy="400" r="360" class="orbit" />
+        <g class="orbit-group neptune-group">
+            <g class="planet-group">
+                <circle cx="760" cy="400" r="7" fill="var(--color-neptune)" class="planet" />
+                <text x="772" y="405" class="label">海王星 Neptune</text>
+            </g>
+        </g>
+    </svg>
+
+    <div class="info">
+        提示：悬停在行星上查看名称 | CSS & SVG 动画渲染
+    </div>
+
+</body>
+</html>
+```
