@@ -195,6 +195,7 @@ LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
+EOF
             systemctl daemon-reload
             success "Systemd service created: $SERVICE_NAME"
             info "To enable and start: systemctl enable --now $SERVICE_NAME"
