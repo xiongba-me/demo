@@ -20,6 +20,10 @@ SERVICE_NAME="shadowsocks-rust"
 # Binaries included in the package
 BINARIES=(ssserver sslocal ssmanager ssurl ssservice)
 
+# Global temp dir — must be global so the EXIT trap can access it
+# even when the script is piped via curl | bash
+TMP_DIR=""
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 info()    { echo -e "\033[1;34m[INFO]\033[0m  $*"; }
 success() { echo -e "\033[1;32m[OK]\033[0m    $*"; }
@@ -94,9 +98,8 @@ main() {
     check_arch
 
     local package_path="${1:-}"
-    local tmp_dir=""
-    tmp_dir=$(mktemp -d)
-    trap '[[ -n "$tmp_dir" ]] && rm -rf "$tmp_dir"' EXIT
+    TMP_DIR=$(mktemp -d)
+    trap '[[ -n "$TMP_DIR" ]] && rm -rf "$TMP_DIR"' EXIT
 
     # Step 1: Obtain the package
     if [[ -n "$package_path" ]]; then
@@ -104,13 +107,13 @@ main() {
             error "Specified package not found: $package_path"
         fi
         info "Using local package: $package_path"
-        cp "$package_path" "$tmp_dir/$SS_PACKAGE"
+        cp "$package_path" "$TMP_DIR/$SS_PACKAGE"
     else
         info "Downloading $SS_PACKAGE from GitHub..."
         if command -v curl &>/dev/null; then
-            curl -fSL --progress-bar "$SS_DOWNLOAD_URL" -o "$tmp_dir/$SS_PACKAGE"
+            curl -fSL --progress-bar "$SS_DOWNLOAD_URL" -o "$TMP_DIR/$SS_PACKAGE"
         elif command -v wget &>/dev/null; then
-            wget -q --show-progress "$SS_DOWNLOAD_URL" -O "$tmp_dir/$SS_PACKAGE"
+            wget -q --show-progress "$SS_DOWNLOAD_URL" -O "$TMP_DIR/$SS_PACKAGE"
         else
             error "Neither curl nor wget is available. Install one and retry."
         fi
@@ -119,14 +122,14 @@ main() {
 
     # Step 2: Extract
     info "Extracting package..."
-    tar -xJf "$tmp_dir/$SS_PACKAGE" -C "$tmp_dir"
+    tar -xJf "$TMP_DIR/$SS_PACKAGE" -C "$TMP_DIR"
     success "Extraction complete."
 
     # Step 3: Install binaries
     info "Installing binaries to $INSTALL_DIR ..."
     for bin in "${BINARIES[@]}"; do
-        if [[ -f "$tmp_dir/$bin" ]]; then
-            install -m 755 "$tmp_dir/$bin" "$INSTALL_DIR/$bin"
+        if [[ -f "$TMP_DIR/$bin" ]]; then
+            install -m 755 "$TMP_DIR/$bin" "$INSTALL_DIR/$bin"
             success "Installed: $INSTALL_DIR/$bin"
         else
             warn "Binary not found in package, skipping: $bin"
