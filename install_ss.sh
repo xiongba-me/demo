@@ -94,9 +94,9 @@ main() {
     check_arch
 
     local package_path="${1:-}"
-    local tmp_dir
+    local tmp_dir=""
     tmp_dir=$(mktemp -d)
-    trap 'rm -rf "$tmp_dir"' EXIT
+    trap '[[ -n "$tmp_dir" ]] && rm -rf "$tmp_dir"' EXIT
 
     # Step 1: Obtain the package
     if [[ -n "$package_path" ]]; then
