@@ -195,23 +195,47 @@ LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
-EOF
             systemctl daemon-reload
             success "Systemd service created: $SERVICE_NAME"
             info "To enable and start: systemctl enable --now $SERVICE_NAME"
         else
-            info "Systemd service already exists, skipping."
+            info "Systemd service already exists, skipping base service creation."
         fi
+
+        info "Configuring service logging to debug connections..."
+        local override_dir="/etc/systemd/system/${SERVICE_NAME}.service.d"
+        mkdir -p "$override_dir"
+        cat > "$override_dir/override.conf" <<'OVERRIDE'
+[Service]
+Environment="RUST_LOG=warn,shadowsocks=debug"
+OVERRIDE
+
+        systemctl daemon-reload
+        # 尝试重启服务以加载新的二进制或新日志配置（如果服务本来没在运行，try-restart 什么也不做，不会报错）
+        systemctl try-restart "$SERVICE_NAME" || true
     else
         warn "systemd not found. You will need to start ssserver manually."
         info "Example: $INSTALL_DIR/ssserver -c $config_file"
     fi
+
+    # Step 7: Create a handy log viewer command
+    local sslog_bin="$INSTALL_DIR/sslog"
+    info "Creating handy log viewer wrapper at $sslog_bin ..."
+    cat > "$sslog_bin" <<'EOF'
+#!/usr/bin/env bash
+# Fast, clean log viewer for shadowsocks-rust
+sudo journalctl -u shadowsocks-rust -f --output=cat \
+  | grep --line-buffered "tunnel\|listening\|exiting" \
+  | sed 's/ with ConnectOpts{.*//; s/ with ConnectOpts {.*//'
+EOF
+    chmod +x "$sslog_bin"
 
     echo ""
     success "shadowsocks-rust v${SS_VERSION} installation complete!"
     echo ""
     echo "  Config  : $config_file"
     echo "  Binaries: $INSTALL_DIR/{$(IFS=,; echo "${BINARIES[*]}")}"
+    echo "  Logs CMD: sslog"
     if command -v systemctl &>/dev/null; then
         echo "  Service : systemctl enable --now $SERVICE_NAME"
     fi
